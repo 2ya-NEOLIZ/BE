@@ -44,6 +44,17 @@ jobs:
           source: "build/libs/*.jar"
           target: "/home/ubuntu/app"
 
+      - name: Create application-secret.yaml
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cat > /home/ubuntu/app/application-secret.yaml << 'EOF'
+            ${{ secrets.APPLICATION_SECRET }}
+            EOF
+
       - name: Run application
         uses: appleboy/ssh-action@master
         with:
@@ -52,4 +63,4 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/app/build/libs
-            nohup java -jar *.jar > /home/ubuntu/app/app.log 2>&1 &
+            nohup java -jar *.jar --spring.config.additional-location=/home/ubuntu/app/application-secret.yaml > /home/ubuntu/app/app.log 2>&1 &

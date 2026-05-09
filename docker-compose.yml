@@ -1,6 +1,7 @@
 services:
   mysql:
     image: mysql:8.4
+    platform: linux/arm64
     container_name: neoliz-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root1234
@@ -9,6 +10,7 @@ services:
       MYSQL_PASSWORD: neoliz1234
     ports:
       - "3306:3306"
+    command: --innodb-buffer-pool-size=128M --innodb-log-buffer-size=8M --max-connections=50
     volumes:
       - mysql-data:/var/lib/mysql
 
