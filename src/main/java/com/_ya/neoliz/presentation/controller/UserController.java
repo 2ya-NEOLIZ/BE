@@ -1,6 +1,7 @@
 package com._ya.neoliz.presentation.controller;
 
 import com._ya.neoliz.application.service.ProfileService;
+import com._ya.neoliz.global.response.ApiResponse;
 import com._ya.neoliz.presentation.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/v1/neoliz/users")
 @RequiredArgsConstructor
 public class UserController {
     private final ProfileService profileService;
@@ -20,8 +21,8 @@ public class UserController {
             description = "내 정보를 조회합니다."
     )
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> findById(@PathVariable Long id) {
-        UserResponse response = profileService.findById(id);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<ApiResponse<UserResponse>> getProfile(@PathVariable Long id) {
+        UserResponse userResponse = profileService.findById(id);
+        return ResponseEntity.ok(ApiResponse.success("조회 완료", userResponse));
     }
 }
