@@ -7,6 +7,7 @@ import com._ya.neoliz.domain.QuizSequenceItem;
 import com._ya.neoliz.persistence.repository.DailyQuizScheduleRepository;
 import com._ya.neoliz.persistence.repository.QuizAttemptRepository;
 import com._ya.neoliz.persistence.repository.QuizPoolRepository;
+import com._ya.neoliz.global.exception.QuizNotFoundException;
 import com._ya.neoliz.persistence.repository.QuizSequenceItemRepository;
 import com._ya.neoliz.presentation.dto.response.DailyQuizResponse;
 import com._ya.neoliz.presentation.dto.response.DailyQuizResponse.EmojiInfo;
@@ -58,13 +59,13 @@ public class QuizService {
         // (1) 오늘 출제된 퀴즈 스케줄 찾기
         LocalDate today = LocalDate.now(KST);
         DailyQuizSchedule schedule = scheduleRepository.findByQuizDate(today)
-                .orElseThrow(() -> new IllegalStateException(
+                .orElseThrow(() -> new QuizNotFoundException(
                         "오늘 출제된 데일리 퀴즈가 없습니다. 날짜: " + today
                 ));
 
         // (2) quiz_id로 퀴즈 본문 조회 (정답/카테고리 등)
         QuizPool quiz = quizPoolRepository.findById(schedule.getQuizId())
-                .orElseThrow(() -> new IllegalStateException(
+                .orElseThrow(() -> new QuizNotFoundException(
                         "퀴즈를 찾을 수 없습니다. quizId: " + schedule.getQuizId()
                 ));
 
