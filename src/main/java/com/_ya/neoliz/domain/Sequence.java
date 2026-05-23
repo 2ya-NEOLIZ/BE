@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Table(name = "sequences")
 @Getter
 @NoArgsConstructor
-public class Sequence {
+public class Sequence extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,11 +21,4 @@ public class Sequence {
     @Column(nullable = false, length = 20)
     private String title;
 
-    @Column(name = "saved_at", nullable = false)
-    private LocalDateTime savedAt;
-
-    @PrePersist
-    public void prePersist() {
-        this.savedAt = LocalDateTime.now();
-    }
 }
