@@ -7,13 +7,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 /**
  * 퀴즈 시도 기록 엔티티
  * - 사용자가 데일리 퀴즈를 어떻게 풀었는지(시도 횟수, 정답 여부, 포기 여부 등) 기록
  * - (user_id, quiz_id) 조합으로 한 퀴즈당 사용자별 1개 레코드 생성/갱신
  * - 데일리 퀴즈 조회 API에서 사용자의 진행 상태(case 1/2/3)를 분기할 때 사용
+ * - createdAt / updatedAt 은 BaseTimeEntity 가 KST 기준으로 자동 관리 (생성 시 + 매 변경 시)
  */
 @Entity
 @Table(name = "quiz_attempts")
@@ -21,7 +20,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class QuizAttempt {
+public class QuizAttempt extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,29 +49,4 @@ public class QuizAttempt {
 
     @Column(nullable = false)                                // 최종 획득 점수
     private Integer score;
-
-    @Column(name = "created_at", nullable = false)           // 최초 시도 시각
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)           // 마지막 갱신 시각 (시도/힌트/포기 발생 시마다 갱신)
-    private LocalDateTime updatedAt;
-
-    /**
-     * INSERT 직전에 createdAt, updatedAt을 동일하게 현재 시각으로 설정
-     */
-    @PrePersist
-    protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
-    }
-
-    /**
-     * UPDATE 직전에 updatedAt만 현재 시각으로 갱신
-     * (createdAt은 그대로 유지)
-     */
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }
