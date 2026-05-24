@@ -33,8 +33,7 @@ public class SequenceController {
 
     @GetMapping("/me/sequences/{sequenceId}")
     @Operation(summary = "시퀀스 상세 조회", description = "마이페이지에서 사용자의 상세 시퀀스를 조회합니다.")
-    public ResponseEntity<ApiResponse<SequenceDetailResponse>> getSequenceDetail(@PathVariable("sequenceId") Long sequenceId) {
-        Long userId = 1L; // getSequenceDetail()을 위한 임시 데이터
+    public ResponseEntity<ApiResponse<SequenceDetailResponse>> getSequenceDetail(@AuthenticationPrincipal Long userId, @PathVariable("sequenceId") Long sequenceId) {
         SequenceDetailResponse response = sequenceService.getSequenceDetail(userId, sequenceId);
         return ResponseEntity.ok(ApiResponse.success("조회 완료", response));
     }
