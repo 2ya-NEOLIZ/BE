@@ -4,14 +4,13 @@ import com._ya.neoliz.application.service.QuizService;
 import com._ya.neoliz.global.response.ApiResponse;
 import com._ya.neoliz.presentation.dto.response.DailyQuizResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 /**
  * 이모지 퀴즈 Controller
@@ -45,13 +44,7 @@ public class QuizController {
     )
     @GetMapping("/daily")
     public ResponseEntity<ApiResponse<DailyQuizResponse>> getDailyQuiz(
-            @Parameter(
-                    description = "사용자 ID (임시 파라미터, JWT 도입 시 헤더 토큰으로 대체 예정)",
-                    example = "1",
-                    required = true
-            )
-            @RequestParam Long userId
-    ) {
+            @AuthenticationPrincipal Long userId) {
         DailyQuizResponse response = quizService.getDailyQuiz(userId);
         return ResponseEntity.ok(ApiResponse.success("오늘의 퀴즈 조회 성공", response));
     }
