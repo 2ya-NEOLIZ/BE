@@ -1,12 +1,18 @@
 package com._ya.neoliz.application.service;
 
+import com._ya.neoliz.domain.RefreshToken;
 import com._ya.neoliz.domain.User;
 import com._ya.neoliz.global.exception.DuplicateEmailException;
 import com._ya.neoliz.global.exception.DuplicateNicknameException;
+import com._ya.neoliz.global.exception.InvalidCredentialsException;
+import com._ya.neoliz.global.util.JwtUtil;
+import com._ya.neoliz.persistence.repository.RefreshTokenRepository;
 import com._ya.neoliz.persistence.repository.UserRepository;
+import com._ya.neoliz.presentation.dto.request.LoginRequest;
 import com._ya.neoliz.presentation.dto.request.SignupRequest;
 import com._ya.neoliz.presentation.dto.response.CheckEmailResponse;
 import com._ya.neoliz.presentation.dto.response.CheckNicknameResponse;
+import com._ya.neoliz.presentation.dto.response.LoginResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +24,8 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtUtil jwtUtil;
 
     // 1. 회원 가입
     public void signup(SignupRequest request) {
@@ -48,5 +56,36 @@ public class AuthService {
     public CheckNicknameResponse checkNickname(String nickname) {
         boolean available = !userRepository.existsByNickname(nickname);
         return CheckNicknameResponse.of(available);
+    }
+
+    // 4. 로그인
+    public LoginResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다."));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new InvalidCredentialsException("이메일 또는 비밀번호가 올바르지 않습니다.");
+        }
+
+        String accessToken = jwtUtil.generateAccessToken(user.getId());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId());
+
+        refreshTokenRepository.findByUser(user)
+                .ifPresentOrElse(
+                        token -> token.updateToken(refreshToken),
+                        () -> refreshTokenRepository.save(
+                                RefreshToken.builder().user(user).token(refreshToken).build()
+                        )
+                );
+
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .user(LoginResponse.UserInfo.builder()
+                        .id(user.getId())
+                        .nickname(user.getNickname())
+                        .profileImageUrl(user.getProfileImageUrl())
+                        .build())
+                .build();
     }
 }
