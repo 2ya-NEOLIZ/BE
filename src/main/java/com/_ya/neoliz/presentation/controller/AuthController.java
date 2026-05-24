@@ -4,11 +4,13 @@ import com._ya.neoliz.application.service.AuthService;
 import com._ya.neoliz.global.response.ApiResponse;
 import com._ya.neoliz.presentation.dto.request.SignupRequest;
 import com._ya.neoliz.presentation.dto.response.CheckEmailResponse;
+import com._ya.neoliz.presentation.dto.response.CheckNicknameResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -37,6 +39,16 @@ public class AuthController {
             @RequestParam @Email @NotBlank String email) {
         CheckEmailResponse response = authService.checkEmail(email);
         String message = response.getAvailable() ? "사용 가능한 이메일입니다." : "이미 사용 중인 이메일입니다.";
+        return ResponseEntity.ok(ApiResponse.success(message, response));
+    }
+
+    // 3. 닉네임 중복 확인
+    @Operation(summary = "닉네임 중복 확인", description = "닉네임 중복 여부를 확인합니다.")
+    @GetMapping("/check-nickname")
+    public ResponseEntity<ApiResponse<CheckNicknameResponse>> checkNickname(
+            @RequestParam @NotBlank @Pattern(regexp = "^[가-힣a-zA-Z0-9]{2,10}$") String nickname) {
+        CheckNicknameResponse response = authService.checkNickname(nickname);
+        String message = response.getAvailable() ? "사용 가능한 닉네임입니다." : "이미 사용 중인 닉네임입니다.";
         return ResponseEntity.ok(ApiResponse.success(message, response));
     }
 }

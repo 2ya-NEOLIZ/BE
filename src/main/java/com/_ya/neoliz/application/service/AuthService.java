@@ -6,6 +6,7 @@ import com._ya.neoliz.global.exception.DuplicateNicknameException;
 import com._ya.neoliz.persistence.repository.UserRepository;
 import com._ya.neoliz.presentation.dto.request.SignupRequest;
 import com._ya.neoliz.presentation.dto.response.CheckEmailResponse;
+import com._ya.neoliz.presentation.dto.response.CheckNicknameResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,5 +42,11 @@ public class AuthService {
     public CheckEmailResponse checkEmail(String email) {
         boolean available = !userRepository.existsByEmail(email);
         return CheckEmailResponse.of(available);
+    }
+
+    // 3. 닉네임 중복 확인
+    public CheckNicknameResponse checkNickname(String nickname) {
+        boolean available = !userRepository.existsByNickname(nickname);
+        return CheckNicknameResponse.of(available);
     }
 }
