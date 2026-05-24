@@ -1,14 +1,15 @@
 package com._ya.neoliz.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "users")
 @Getter
 @NoArgsConstructor
-public class User {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
+public class User extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
