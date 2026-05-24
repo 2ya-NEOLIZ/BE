@@ -62,4 +62,11 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("UNAUTHORIZED", e.getMessage(), null));
     }
 
+    // 7. 시퀀스를 찾을 수 없는 경우 404
+    @ExceptionHandler(SequenceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSequenceNotFoundException(SequenceNotFoundException e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("F404", e.getMessage(), null));
+    }
 }
