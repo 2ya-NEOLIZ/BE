@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @RestController
 @RequestMapping("/api/v1/neoliz/users")
@@ -18,9 +19,8 @@ public class UserController {
             description = "내 정보를 조회합니다."
     )
     @GetMapping("/me")
-    public ResponseEntity<?> getProfile() {
-        Long id = 1L;   // findById()를 위한 임시 데이터
-        UserResponse userResponse = profileService.findById(id);
+    public ResponseEntity<?> getProfile(@AuthenticationPrincipal Long userId) {
+        UserResponse userResponse = profileService.findById(userId);
         return ResponseEntity.ok(ApiResponse.success("조회 완료", userResponse));
     }
 }
