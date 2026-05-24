@@ -17,6 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com._ya.neoliz.presentation.dto.request.LoginRequest;
 import com._ya.neoliz.presentation.dto.response.LoginResponse;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 
 @Validated
@@ -25,6 +26,7 @@ import com._ya.neoliz.presentation.dto.response.LoginResponse;
 @RequestMapping("/api/v1/neoliz/auth")
 @RequiredArgsConstructor
 public class AuthController {
+
     private final AuthService authService;
 
     // 1. 회원 가입
@@ -61,6 +63,14 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest request) {
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(ApiResponse.success("로그인 성공", response));
+    }
+
+    // 5. 로그아웃
+    @Operation(summary = "로그아웃", description = "로그아웃 후 Refresh Token을 삭제합니다.")
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal Long userId) {
+        authService.logout(userId);
+        return ResponseEntity.ok(ApiResponse.success("로그아웃 성공", null));
     }
 
 }
