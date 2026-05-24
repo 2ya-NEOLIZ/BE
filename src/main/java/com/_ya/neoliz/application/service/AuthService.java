@@ -5,6 +5,7 @@ import com._ya.neoliz.global.exception.DuplicateEmailException;
 import com._ya.neoliz.global.exception.DuplicateNicknameException;
 import com._ya.neoliz.persistence.repository.UserRepository;
 import com._ya.neoliz.presentation.dto.request.SignupRequest;
+import com._ya.neoliz.presentation.dto.response.CheckEmailResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +18,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // 1. 회원 가입
     public void signup(SignupRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateEmailException("이미 사용 중인 이메일입니다.");
@@ -33,5 +35,11 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+    }
+
+    // 2. 이메일 중복 확인
+    public CheckEmailResponse checkEmail(String email) {
+        boolean available = !userRepository.existsByEmail(email);
+        return CheckEmailResponse.of(available);
     }
 }
