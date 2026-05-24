@@ -5,7 +5,6 @@ import lombok.Getter;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Objects;
 
 @Getter
 public class ApiResponse<T> {
@@ -28,7 +27,7 @@ public class ApiResponse<T> {
         return new ApiResponse<>("S200", message, data, null);
     }
 
-    public static <T> ApiResponse error(String code, String message, Object errors) {
+    public static <T> ApiResponse<T> error(String code, String message, Object errors) {
         return new ApiResponse<>(code, message, null, errors);
     }
 }
