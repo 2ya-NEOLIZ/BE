@@ -15,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import com._ya.neoliz.presentation.dto.request.LoginRequest;
+import com._ya.neoliz.presentation.dto.response.LoginResponse;
+
 
 @Validated
 @Tag(name = "인증", description = "회원가입/로그인 관련 API")
@@ -51,4 +54,13 @@ public class AuthController {
         String message = response.getAvailable() ? "사용 가능한 닉네임입니다." : "이미 사용 중인 닉네임입니다.";
         return ResponseEntity.ok(ApiResponse.success(message, response));
     }
+
+    // 4. 로그인
+    @Operation(summary = "로그인", description = "이메일/비밀번호로 로그인합니다.")
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody @Valid LoginRequest request) {
+        LoginResponse response = authService.login(request);
+        return ResponseEntity.ok(ApiResponse.success("로그인 성공", response));
+    }
+
 }
