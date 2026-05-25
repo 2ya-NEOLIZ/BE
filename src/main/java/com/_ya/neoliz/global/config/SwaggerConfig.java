@@ -22,7 +22,8 @@ public class SwaggerConfig {
                 .in(SecurityScheme.In.HEADER)
                 .name("Authorization");
         return new OpenAPI()
-                .addServersItem(new Server().url("https://neoliz.z0.co.kr"))
+                .addServersItem(new Server().url("https://neoliz.z0.co.kr").description("Production"))
+                .addServersItem(new Server().url("http://localhost:8080").description("Local"))
                 .info(new Info()
                         .title("Neoliz API")
                         .description("Neoliz API 명세서")
