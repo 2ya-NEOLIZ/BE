@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
  * - (user_id, quiz_id) 조합으로 한 퀴즈당 사용자별 1개 레코드 생성/갱신
  * - 데일리 퀴즈 조회 API에서 사용자의 진행 상태(case 1/2/3)를 분기할 때 사용
  * - createdAt / updatedAt 은 BaseTimeEntity 가 KST 기준으로 자동 관리 (생성 시 + 매 변경 시)
+ *
+ * 상태 변경은 setter 대신 비즈니스 메서드로 처리 (Service에서 호출).
  */
 @Entity
 @Table(name = "quiz_attempts")
@@ -49,4 +51,55 @@ public class QuizAttempt extends BaseTimeEntity {
 
     @Column(nullable = false)                                // 최종 획득 점수
     private Integer score;
+
+    // ───────────────────────────────────────────────
+    //  비즈니스 메서드 (상태 변경은 여기서만)
+    // ───────────────────────────────────────────────
+
+    /**
+     * 첫 시도 기록을 위한 정적 팩토리.
+     * - attemptCount는 호출하는 쪽(Service)에서 0으로 시작해 incrementAttemptCount()로 올린다.
+     */
+    public static QuizAttempt createNew(Long userId, Long quizId) {
+        return QuizAttempt.builder()
+                .userId(userId)
+                .quizId(quizId)
+                .attemptCount(0)
+                .isSolved(false)
+                .hintUsed(false)
+                .isGivenUp(false)
+                .isFinished(false)
+                .score(0)
+                .build();
+    }
+
+    /** 시도 횟수 1 증가 (정답 제출/오답 모두에서 호출) */
+    public void incrementAttemptCount() {
+        this.attemptCount += 1;
+    }
+
+    /** 정답 맞춤 처리 — 종료 상태로 전환 + 점수 반영 */
+    public void markSolved(int score) {
+        this.isSolved = true;
+        this.isFinished = true;
+        this.score = score;
+    }
+
+    /** 5회 오답 자동 종료 처리 — 종료만 표시, 점수 0 */
+    public void markFailed() {
+        this.isFinished = true;
+        this.score = 0;
+    }
+
+    /** 포기 처리 — 포기 표시 + 종료 + 점수 0 */
+    public void markGivenUp() {
+        this.isGivenUp = true;
+        this.isFinished = true;
+        this.score = 0;
+    }
+
+    /** 힌트 사용 표시 (정답 점수 계산 시 차감용) */
+    public void useHint() {
+        this.hintUsed = true;
+    }
 }
