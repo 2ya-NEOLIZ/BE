@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface SequenceItemRepository extends JpaRepository<SequenceItem, Long> {
     List<SequenceItem> findBySequenceIdOrderByOrderIndexAsc(Long sequenceId);
+    void deleteBySequenceId(Long sequenceId);
 }
