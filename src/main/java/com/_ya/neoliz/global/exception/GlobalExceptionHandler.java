@@ -77,4 +77,12 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error("F404", e.getMessage(), null));
     }
+
+    // 9. 시퀀스를 소유한 사용자가 아닐 경우 403
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleForbiddenException(ForbiddenException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("F403", e.getMessage(), null));
+    }
 }

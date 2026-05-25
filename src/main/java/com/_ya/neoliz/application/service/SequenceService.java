@@ -2,6 +2,7 @@ package com._ya.neoliz.application.service;
 
 import com._ya.neoliz.domain.Sequence;
 import com._ya.neoliz.domain.SequenceItem;
+import com._ya.neoliz.global.exception.ForbiddenException;
 import com._ya.neoliz.global.exception.SequenceNotFoundException;
 import com._ya.neoliz.persistence.repository.SequenceItemRepository;
 import com._ya.neoliz.persistence.repository.SequenceRepository;
@@ -30,6 +31,9 @@ public class SequenceService {
     public SequenceDetailResponse getSequenceDetail(Long userId, Long sequenceId) {
         Sequence sequence = sequenceRepository.findById(sequenceId)
                 .orElseThrow(() -> new SequenceNotFoundException("조회 실패"));
+        if (!sequence.getUserId().equals(userId)) {
+            throw new ForbiddenException("권한 불일치");
+        }
         List<SequenceItem> items = sequenceItemRepository.findBySequenceIdOrderByOrderIndexAsc(sequenceId);
         List<SequenceItemResponse> itemsResponses = items.stream()
                 .map(item -> {
