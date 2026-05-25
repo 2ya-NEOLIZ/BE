@@ -85,4 +85,13 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .body(ApiResponse.error("F403", e.getMessage(), null));
     }
+
+    // 10. 이모지를 찾을 수 없는 경우 404
+    @ExceptionHandler(EmojiNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEmojiNotFoundException(EmojiNotFoundException e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("F404", e.getMessage(), null));
+    }
+
 }
