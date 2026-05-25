@@ -94,4 +94,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("F404", e.getMessage(), null));
     }
 
+    // 11. 유효하지 않은 배율인 경우 400
+    @ExceptionHandler(InvalidMultiplierException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidMultiplierException(InvalidMultiplierException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("F400", e.getMessage(), null));
+    }
+
 }
