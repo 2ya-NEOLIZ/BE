@@ -89,8 +89,12 @@ public class QuizController {
         if (Boolean.TRUE.equals(response.getIsGivenUp())) {
             return "포기 처리 완료";
         }
-        if (Boolean.TRUE.equals(response.getIsFinished())) {
+        if (Boolean.TRUE.equals(response.getIsFinished())
+                && !Boolean.TRUE.equals(response.getIsCorrect())) {
             return "기회를 모두 사용했습니다";
+        }
+        if (Boolean.TRUE.equals(response.getIsCorrect())) {
+            return "정답 제출 성공";
         }
         return "정답 제출 성공";
     }

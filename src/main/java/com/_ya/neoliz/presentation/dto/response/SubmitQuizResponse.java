@@ -48,19 +48,21 @@ public class SubmitQuizResponse {
     //  case 별 정적 팩토리 메서드
     // ───────────────────────────────────────────────
 
-    /** case 1: 정답 맞춤 */
+    /** case 1: 정답 맞춤 (정답 시점에 퀴즈 종료) */
     public static SubmitQuizResponse correct(int attemptCount, int score) {
         return SubmitQuizResponse.builder()
                 .isCorrect(true)
+                .isFinished(true)
                 .attemptCount(attemptCount)
                 .score(score)
                 .build();
     }
 
-    /** case 2: 오답 + 시도 가능 (아직 5회 안 됨) */
+    /** case 2: 오답 + 시도 가능 (아직 5회 안 됨, 진행 중) */
     public static SubmitQuizResponse wrong(int remainingAttempts) {
         return SubmitQuizResponse.builder()
                 .isCorrect(false)
+                .isFinished(false)
                 .remainingAttempts(remainingAttempts)
                 .build();
     }
