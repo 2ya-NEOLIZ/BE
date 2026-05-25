@@ -19,4 +19,10 @@ public class Sequence extends BaseTimeEntity {
     @Column(nullable = false, length = 20)
     private String title;
 
+    public static Sequence create(Long userId, String title) {
+        Sequence sequence = new Sequence();
+        sequence.userId = userId;
+        sequence.title = title;
+        return sequence;
+    }
 }
