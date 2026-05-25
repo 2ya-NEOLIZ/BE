@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor                                          // JSON → 객체 역직렬화 시 필요
 @AllArgsConstructor                                         // 테스트용 전체 필드 생성자
-public class SubmitQuizRequest
+public class SubmitQuizRequest {
 
     /** 사용자가 입력한 정답 텍스트 (포기 시 빈 문자열 허용) */
     private String answer;
