@@ -62,4 +62,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("UNAUTHORIZED", e.getMessage(), null));
     }
 
+    // 7. 유효하지 않은 카테고리인 경우 400
+    @ExceptionHandler(InvalidCategoryException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidCategoryException(InvalidCategoryException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("F400", e.getMessage(), null));
+    }
+
 }
