@@ -27,5 +27,4 @@ public class EmojiController {
         EmojiListResponse response = emojiService.getEmojisByCategory(category);
         return ResponseEntity.ok(ApiResponse.success("이모지 조회 성공", response));
     }
-
 }
