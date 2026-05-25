@@ -12,10 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @Tag(name = "시퀀스", description = "시퀀스 관련 API")
@@ -37,4 +34,12 @@ public class SequenceController {
         SequenceDetailResponse response = sequenceService.getSequenceDetail(userId, sequenceId);
         return ResponseEntity.ok(ApiResponse.success("조회 완료", response));
     }
+
+    @DeleteMapping("/me/sequences/{sequenceId}")
+    @Operation(summary = "시퀀스 삭제", description = "마이페이지에서 사용자의 시퀀스를 삭제합니다.")
+    public ResponseEntity<ApiResponse<Void>> deleteSequence(@AuthenticationPrincipal Long userId, @PathVariable("sequenceId") Long sequenceId) {
+        sequenceService.deleteSequence(userId, sequenceId);
+        return ResponseEntity.ok(ApiResponse.success("시퀀스 삭제 성공", null));
+    }
+
 }
