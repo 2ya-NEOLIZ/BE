@@ -44,4 +44,16 @@ public class SequenceService {
                 .toList();
         return SequenceDetailResponse.from(sequence, itemsResponses);
     }
+
+    @Transactional
+    public void deleteSequence(Long userId, Long sequenceId) {
+        Sequence sequence = sequenceRepository.findById(sequenceId)
+                .orElseThrow(() -> new SequenceNotFoundException("조회 실패")); // 404
+        if (!sequence.getUserId().equals(userId)) {
+            throw new ForbiddenException("권한 불일치"); // 403
+        }
+        sequenceItemRepository.deleteBySequenceId(sequenceId);
+        sequenceRepository.delete(sequence);
+    }
+
 }
