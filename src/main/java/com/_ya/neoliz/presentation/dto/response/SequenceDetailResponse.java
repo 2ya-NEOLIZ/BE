@@ -12,9 +12,9 @@ import java.util.List;
 public class SequenceDetailResponse {
     private Long id;
     private String title;
-    private List<SequenceItemsResponse> items;
+    private List<SequenceItemResponse> items;
 
-    public static SequenceDetailResponse from(Sequence sequence, List<SequenceItemsResponse> itemsList) {
+    public static SequenceDetailResponse from(Sequence sequence, List<SequenceItemResponse> itemsList) {
         return SequenceDetailResponse.builder()
                 .id(sequence.getId())
                 .title(sequence.getTitle())

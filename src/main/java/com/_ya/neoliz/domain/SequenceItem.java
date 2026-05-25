@@ -7,10 +7,10 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "sequenceItems")
+@Table(name = "sequence_items")
 @Getter
 @NoArgsConstructor
-public class SequenceItems {
+public class SequenceItem extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
