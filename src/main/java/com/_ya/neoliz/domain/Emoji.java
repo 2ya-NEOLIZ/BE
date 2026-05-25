@@ -28,4 +28,7 @@ public class Emoji extends BaseTimeEntity {
     @Column(nullable = false, length = 500)
     private String soundUrl;
 
+    @Column(length = 100)
+    private String description;
+
 }

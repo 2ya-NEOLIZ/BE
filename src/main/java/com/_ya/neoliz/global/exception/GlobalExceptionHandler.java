@@ -70,7 +70,31 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("F400", e.getMessage(), null));
     }
 
-    // 8. 이미 종료된 퀴즈에 재제출/포기 요청 시 409 (정답/포기/5회 소진 후)
+    // 8. 시퀀스를 찾을 수 없는 경우 404
+    @ExceptionHandler(SequenceNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSequenceNotFoundException(SequenceNotFoundException e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("F404", e.getMessage(), null));
+    }
+
+    // 9. 시퀀스를 소유한 사용자가 아닐 경우 403
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleForbiddenException(ForbiddenException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("F403", e.getMessage(), null));
+    }
+
+    // 10. 이모지를 찾을 수 없는 경우 404
+    @ExceptionHandler(EmojiNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEmojiNotFoundException(EmojiNotFoundException e) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("F404", e.getMessage(), null));
+    }
+
+    // 11. 이미 종료된 퀴즈에 재제출/포기 요청 시 409 (정답/포기/5회 소진 후)
     @ExceptionHandler(QuizAttemptAlreadyFinishedException.class)
     public ResponseEntity<ApiResponse<Void>> handleQuizAttemptAlreadyFinishedException(QuizAttemptAlreadyFinishedException e) {
         return ResponseEntity
