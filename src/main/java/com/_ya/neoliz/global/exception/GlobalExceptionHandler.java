@@ -102,4 +102,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("F400", e.getMessage(), null));
     }
 
+    // 11. 이미 종료된 퀴즈에 재제출/포기 요청 시 409 (정답/포기/5회 소진 후)
+    @ExceptionHandler(QuizAttemptAlreadyFinishedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleQuizAttemptAlreadyFinishedException(QuizAttemptAlreadyFinishedException e) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("F409", e.getMessage(), null));
+    }
+
 }
