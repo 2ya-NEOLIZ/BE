@@ -27,4 +27,12 @@ public class SequenceItem extends BaseTimeEntity {
     @Column(name = "multiplier", nullable = false, precision = 2, scale = 1) // 전체 자리수: 2자리, 소숫점 이하: 1자리
     private BigDecimal multiplier;
 
+    public static SequenceItem create(Long sequenceId, Long emojiId, Integer orderIndex, BigDecimal multiplier) {
+        SequenceItem item = new SequenceItem();
+        item.sequenceId = sequenceId;
+        item.emojiId = emojiId;
+        item.orderIndex = orderIndex;
+        item.multiplier = multiplier;
+        return item;
+    }
 }

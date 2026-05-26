@@ -94,7 +94,23 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("F404", e.getMessage(), null));
     }
 
-    // 11. 유효하지 않은 프로필 이미지인 경우 400
+    // 11. 유효하지 않은 배율인 경우 400
+    @ExceptionHandler(InvalidMultiplierException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidMultiplierException(InvalidMultiplierException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("F400", e.getMessage(), null));
+    }
+
+    // 12. 이미 종료된 퀴즈에 재제출/포기 요청 시 409 (정답/포기/5회 소진 후)
+    @ExceptionHandler(QuizAttemptAlreadyFinishedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleQuizAttemptAlreadyFinishedException(QuizAttemptAlreadyFinishedException e) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("F409", e.getMessage(), null));
+    }
+
+    // 13s. 유효하지 않은 프로필 이미지인 경우 400
     @ExceptionHandler(ProfileBadRequestException.class)
     public ResponseEntity<ApiResponse<Void>> handleProfileBadRequestException(ProfileBadRequestException e) {
         return ResponseEntity
