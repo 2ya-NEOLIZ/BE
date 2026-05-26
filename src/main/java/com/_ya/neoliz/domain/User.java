@@ -25,4 +25,8 @@ public class User extends BaseTimeEntity {
 
     @Column(nullable = false, length = 500)
     private String profileImageUrl;
+
+    public void updateNickname(String newNickname) {
+        this.nickname = newNickname;
+    }
 }
