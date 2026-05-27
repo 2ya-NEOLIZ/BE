@@ -22,6 +22,9 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
+import com._ya.neoliz.domain.Emoji;
+import com._ya.neoliz.global.exception.EmojiNotFoundException;
+import com._ya.neoliz.persistence.repository.EmojiRepository;
 
 /**
  * 이모지 퀴즈 도메인 Service
@@ -52,6 +55,7 @@ public class QuizService {
     private final QuizPoolRepository quizPoolRepository;
     private final QuizSequenceItemRepository quizSequenceItemRepository;
     private final QuizAttemptRepository quizAttemptRepository;
+    private final EmojiRepository emojiRepository;
 
     /**
      * 데일리 퀴즈 조회 — 오늘의 퀴즈 + 사용자 진행 상태 반환
@@ -74,13 +78,16 @@ public class QuizService {
         List<QuizSequenceItem> items =
                 quizSequenceItemRepository.findByQuizIdOrderByOrderIndexAsc(quiz.getId());
 
-        // TODO: 주희님의 Emoji 엔티티/EmojiRepository 머지되면 그때 imageUrl/soundUrl 채우기.
         List<EmojiInfo> sequence = items.stream()
-                .map(item -> EmojiInfo.builder()
-                        .emojiId(item.getEmojiId())
-                        .imageUrl("")
-                        .soundUrl("")
-                        .build())
+                .map(item -> {
+                    Emoji emoji = emojiRepository.findById(item.getEmojiId())
+                            .orElseThrow(() -> new EmojiNotFoundException("존재하지 않는 이모지입니다."));
+                    return EmojiInfo.builder()
+                            .emojiId(item.getEmojiId())
+                            .imageUrl(emoji.getImageUrl())
+                            .soundUrl(emoji.getSoundUrl())
+                            .build();
+                })
                 .toList();
 
         // 사용자의 이 퀴즈 시도 기록 조회 (미시도면 Optional.empty())
