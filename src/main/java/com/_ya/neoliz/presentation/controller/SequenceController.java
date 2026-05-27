@@ -49,7 +49,15 @@ public class SequenceController {
             @AuthenticationPrincipal Long userId,
             @RequestBody @Valid SaveSequenceRequest request) {
         SaveSequenceResponse response = sequenceService.saveSequence(userId, request);
-        return ResponseEntity.ok(ApiResponse.success("시퀀스 저장 성공", response));
+        return ResponseEntity.ok(ApiResponse.success("시퀀스 저장 ㄴ성공", response));
+    }
+
+    // 4. 시퀀스 삭제
+    @DeleteMapping("/me/sequences/{sequenceId}")
+    @Operation(summary = "시퀀스 삭제", description = "마이페이지에서 사용자의 시퀀스를 삭제합니다.")
+    public ResponseEntity<ApiResponse<Void>> deleteSequence(@AuthenticationPrincipal Long userId, @PathVariable("sequenceId") Long sequenceId) {
+        sequenceService.deleteSequence(userId, sequenceId);
+        return ResponseEntity.ok(ApiResponse.success("시퀀스 삭제 성공", null));
     }
 
 }
