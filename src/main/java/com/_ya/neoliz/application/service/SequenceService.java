@@ -65,7 +65,9 @@ public class SequenceService {
                 new BigDecimal("1.5"), new BigDecimal("2.0")
         );
         for (SaveSequenceRequest.ItemRequest item : request.getItems()) {
-            if (!validMultipliers.contains(item.getMultiplier())) {
+            boolean isValid = validMultipliers.stream()
+                    .anyMatch(v -> v.compareTo(item.getMultiplier()) == 0);
+            if (!isValid) {
                 throw new InvalidMultiplierException("유효하지 않은 배율입니다.");
             }
             if (!emojiRepository.existsById(item.getEmojiId())) {
