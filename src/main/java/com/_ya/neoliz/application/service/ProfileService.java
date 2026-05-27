@@ -25,9 +25,9 @@ public class ProfileService {
     @Transactional
     public UpdateNicknameResponse updateNickname(Long id, UpdateNicknameRequest request) {
         String newNickname = request.getNickname();
-        if (userRepository.existsByNickname(newNickname)) { throw new DuplicateNicknameException("닉네임 중복"); }
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("조회 실패"));
+        if (userRepository.existsByNicknameAndIdNot(newNickname, id)) { throw new DuplicateNicknameException("닉네임 중복"); }
         user.updateNickname(newNickname);
         return UpdateNicknameResponse.from(user);
     }
