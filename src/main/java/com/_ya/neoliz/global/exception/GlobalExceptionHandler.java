@@ -110,4 +110,11 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("F409", e.getMessage(), null));
     }
 
+    // 13s. 유효하지 않은 프로필 이미지인 경우 400
+    @ExceptionHandler(ProfileBadRequestException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProfileBadRequestException(ProfileBadRequestException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("F400", e.getMessage(), null));
+    }
 }
