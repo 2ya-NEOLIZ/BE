@@ -4,6 +4,8 @@ import com._ya.neoliz.domain.DailyQuizSchedule;
 import com._ya.neoliz.domain.QuizAttempt;
 import com._ya.neoliz.domain.QuizPool;
 import com._ya.neoliz.domain.QuizSequenceItem;
+import com._ya.neoliz.global.exception.HintAlreadyUsedException;
+import com._ya.neoliz.global.exception.HintBeforeAttemptException;
 import com._ya.neoliz.global.exception.QuizAttemptAlreadyFinishedException;
 import com._ya.neoliz.global.exception.QuizNotFoundException;
 import com._ya.neoliz.persistence.repository.DailyQuizScheduleRepository;
@@ -14,6 +16,7 @@ import com._ya.neoliz.presentation.dto.request.SubmitQuizRequest;
 import com._ya.neoliz.presentation.dto.response.DailyQuizResponse;
 import com._ya.neoliz.presentation.dto.response.DailyQuizResponse.EmojiInfo;
 import com._ya.neoliz.presentation.dto.response.SubmitQuizResponse;
+import com._ya.neoliz.presentation.dto.response.UseHintResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -155,6 +158,57 @@ public class QuizService {
         // case 2: 오답 (시도 가능)
         quizAttemptRepository.save(attempt);
         return SubmitQuizResponse.wrong(remaining);
+    }
+
+    /**
+     * 데일리 퀴즈 힌트 사용 — 정답의 카테고리 정보 반환
+     *
+     * 처리 흐름:
+     *   1) 오늘 출제된 퀴즈 조회 (없으면 QuizNotFoundException → 500)
+     *   2) 사용자 시도 기록 조회
+     *      - 시도 기록이 없거나 attemptCount=0 → HintBeforeAttemptException (403)
+     *   3) 이미 종료된 퀴즈인지 검증 → QuizAttemptAlreadyFinishedException (409)
+     *      - 정답/포기/5회 소진 모두 포함
+     *   4) 이미 힌트를 사용했는지 검증 → HintAlreadyUsedException (409)
+     *   5) attempt.useHint() 호출 + 저장 (hint_used = true)
+     *   6) 카테고리 정보 반환
+     *
+     * @param userId JWT에서 추출한 사용자 PK
+     * @return 정답 카테고리 (동물 / 영화 / 노래 / 밈)
+     */
+    @Transactional   // 쓰기 작업이라 readOnly 덮어쓰기
+    public UseHintResponse useHint(Long userId) {
+        // (1) 오늘 퀴즈 조회
+        QuizPool quiz = getTodayQuiz();
+
+        // (2) 시도 기록 조회 — 미시도 시 403
+        QuizAttempt attempt = quizAttemptRepository.findByUserIdAndQuizId(userId, quiz.getId())
+                .orElseThrow(() -> new HintBeforeAttemptException(
+                        "1회 오답 후 사용 가능합니다."
+                ));
+
+        if (attempt.getAttemptCount() == null || attempt.getAttemptCount() < 1) {
+            throw new HintBeforeAttemptException("1회 오답 후 사용 가능합니다.");
+        }
+
+        // (3) 이미 종료된 퀴즈 → 409
+        if (Boolean.TRUE.equals(attempt.getIsFinished())) {
+            throw new QuizAttemptAlreadyFinishedException(
+                    "이미 종료된 퀴즈입니다. (정답/포기/5회 소진)"
+            );
+        }
+
+        // (4) 이미 힌트 사용 → 409
+        if (Boolean.TRUE.equals(attempt.getHintUsed())) {
+            throw new HintAlreadyUsedException("이미 힌트를 사용한 퀴즈입니다.");
+        }
+
+        // (5) 힌트 사용 처리 + 저장
+        attempt.useHint();
+        quizAttemptRepository.save(attempt);
+
+        // (6) 카테고리 반환
+        return UseHintResponse.of(quiz.getCategory());
     }
 
     // ───────────────────────────────────────────────
