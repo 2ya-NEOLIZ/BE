@@ -110,4 +110,20 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("F409", e.getMessage(), null));
     }
 
+    // 12. 1회도 시도하지 않은 상태에서 힌트 요청 시 403 (1회 오답 후 사용 가능)
+    @ExceptionHandler(HintBeforeAttemptException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHintBeforeAttemptException(HintBeforeAttemptException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("F403", e.getMessage(), null));
+    }
+
+    // 13. 이미 힌트를 사용한 상태에서 다시 힌트 요청 시 409
+    @ExceptionHandler(HintAlreadyUsedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHintAlreadyUsedException(HintAlreadyUsedException e) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("F409", e.getMessage(), null));
+    }
+
 }
