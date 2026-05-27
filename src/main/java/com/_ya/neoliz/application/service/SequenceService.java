@@ -1,5 +1,6 @@
 package com._ya.neoliz.application.service;
 
+import com._ya.neoliz.domain.Emoji;
 import com._ya.neoliz.domain.Sequence;
 import com._ya.neoliz.domain.SequenceItem;
 import com._ya.neoliz.global.exception.ForbiddenException;
@@ -48,9 +49,9 @@ public class SequenceService {
         List<SequenceItem> items = sequenceItemRepository.findBySequenceIdOrderByOrderIndexAsc(sequenceId);
         List<SequenceItemResponse> itemsResponses = items.stream()
                 .map(item -> {
-                    String soundUrl = "임시 Url";
-                    String imageUrl = "임시 Url";
-                    return SequenceItemResponse.from(item, soundUrl, imageUrl);
+                    Emoji emoji = emojiRepository.findById(item.getEmojiId())
+                            .orElseThrow(() -> new EmojiNotFoundException("존재하지 않는 이모지입니다."));
+                    return SequenceItemResponse.from(item, emoji.getSoundUrl(), emoji.getImageUrl());
                 })
                 .toList();
         return SequenceDetailResponse.from(sequence, itemsResponses);
