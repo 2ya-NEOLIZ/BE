@@ -35,9 +35,9 @@ public class UserController {
     @PatchMapping(value = "/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // consumes: 멀티 폼 데이터 형식으로 받기 위해 꼭 설정
     public ResponseEntity<ApiResponse<ProfileImageResponse>> updateProfileImage(
             @AuthenticationPrincipal Long userId,
-            @RequestPart(value = "image") MultipartFile image
+            @RequestPart(value = "profileImage") MultipartFile profileImage
     ) {
-        String newImageUrl = profileService.updateProfileImage(userId, image);
+        String newImageUrl = profileService.updateProfileImage(userId, profileImage);
         ProfileImageResponse profileImageResponse = new ProfileImageResponse(newImageUrl);
         return ResponseEntity.ok(ApiResponse.success("프로필 이미지 변경 성공", profileImageResponse));
     }
