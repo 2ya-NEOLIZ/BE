@@ -2,13 +2,19 @@ package com._ya.neoliz.presentation.controller;
 
 import com._ya.neoliz.application.service.ProfileService;
 import com._ya.neoliz.global.response.ApiResponse;
+import com._ya.neoliz.presentation.dto.response.ProfileImageResponse;
+import com._ya.neoliz.presentation.dto.request.UpdateNicknameRequest;
+import com._ya.neoliz.presentation.dto.response.UpdateNicknameResponse;
 import com._ya.neoliz.presentation.dto.response.UserResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "사용자", description = "사용자 정보 관련 API")
 @RestController
@@ -24,5 +30,28 @@ public class UserController {
     public ResponseEntity<?> getProfile(@AuthenticationPrincipal Long userId) {
         UserResponse userResponse = profileService.findById(userId);
         return ResponseEntity.ok(ApiResponse.success("조회 완료", userResponse));
+    }
+    @Operation(
+            summary = "프로필 이미지 수정",
+            description = "프로필 이미지를 수정합니다."
+    )
+    @PatchMapping(value = "/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // consumes: 멀티 폼 데이터 형식으로 받기 위해 꼭 설정
+    public ResponseEntity<ApiResponse<ProfileImageResponse>> updateProfileImage(
+            @AuthenticationPrincipal Long userId,
+            @RequestPart(value = "profileImage") MultipartFile profileImage
+    ) {
+        String newImageUrl = profileService.updateProfileImage(userId, profileImage);
+        ProfileImageResponse profileImageResponse = new ProfileImageResponse(newImageUrl);
+        return ResponseEntity.ok(ApiResponse.success("프로필 이미지 변경 성공", profileImageResponse));
+    }
+
+    @Operation(
+            summary = "닉네임 수정",
+            description = "내 닉네임을 수정합니다."
+    )
+    @PatchMapping("/me/nickname")
+    public ResponseEntity<ApiResponse<UpdateNicknameResponse>> updateNickname(@AuthenticationPrincipal Long userId, @RequestBody @Valid UpdateNicknameRequest request) {
+        UpdateNicknameResponse nicknameResponse =  profileService.updateNickname(userId, request);
+        return ResponseEntity.ok(ApiResponse.success("닉네임 변경 성공", nicknameResponse));
     }
 }
