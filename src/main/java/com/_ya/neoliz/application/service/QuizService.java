@@ -194,10 +194,6 @@ public class QuizService {
                         "1회 오답 후 사용 가능합니다."
                 ));
 
-        if (attempt.getAttemptCount() == null || attempt.getAttemptCount() < 1) {
-            throw new HintBeforeAttemptException("1회 오답 후 사용 가능합니다.");
-        }
-
         // (3) 이미 종료된 퀴즈 → 409
         if (Boolean.TRUE.equals(attempt.getIsFinished())) {
             throw new QuizAttemptAlreadyFinishedException(
