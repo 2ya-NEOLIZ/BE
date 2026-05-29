@@ -4,14 +4,29 @@ import com._ya.neoliz.global.exception.ProfileBadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import java.io.IOException;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class StorageService {
+    private final S3Client s3Client;
+
+    @Value("${cloud.aws.s3.bucket}")
+    private String bucket;
+
+    @Value("${cloud.aws.s3.region}")
+    private String region;
+
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "webp");
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -28,8 +43,21 @@ public class StorageService {
         if (!ALLOWED_EXTENSIONS.contains(extension.toLowerCase())) {
             throw new ProfileBadRequestException("지원하지 않는 파일 형식입니다. (jpg, png, webp만 허용)");
         }
-        String uniqueFilename = UUID.randomUUID() + "." + extension;
-        return "temp.url/" + uniqueFilename; // 임시 반환값
+        String key = "profiles/" + UUID.randomUUID() + "." + extension;
+        try {
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .contentType(file.getContentType())
+                            .contentLength(file.getSize())
+                            .build(),
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
+            );
+        } catch (IOException e) {
+            throw new ProfileBadRequestException("파일 업로드에 실패했습니다.");
+        }
+        return "https://" + bucket + ".s3." + region + ".amazonaws.com/" + key;
     }
 
     private String getExtension(String filename) {
@@ -38,9 +66,13 @@ public class StorageService {
     }
     public void delete(String fileUrl) {
         if (fileUrl == null || fileUrl.isEmpty()) return;
-        // S3 연동 X -> 현재 시점에서는 로그만 출력(추후 연동 필요)
+
         try {
-            log.info("파일 삭제 로직 호출: {}", fileUrl);
+            String key = fileUrl.substring(fileUrl.indexOf(".amazonaws.com/") + ".amazonaws.com/".length());
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build());
         } catch (Exception e) {
             log.error("파일 삭제 중 에러 발생 - URL: {}", fileUrl, e);
         }
