@@ -21,6 +21,12 @@ import com._ya.neoliz.persistence.repository.EmojiRepository;
 import com._ya.neoliz.presentation.dto.request.SaveSequenceRequest;
 import com._ya.neoliz.presentation.dto.response.SaveSequenceResponse;
 import java.math.BigDecimal;
+import com._ya.neoliz.domain.ScoreLog;
+import com._ya.neoliz.domain.ScoreType;
+import com._ya.neoliz.persistence.repository.ScoreLogRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 
 import java.util.List;
@@ -32,6 +38,7 @@ public class SequenceService {
     private final SequenceRepository sequenceRepository;
     private final SequenceItemRepository sequenceItemRepository;
     private final EmojiRepository emojiRepository;
+    private final ScoreLogRepository scoreLogRepository;
 
     // 1. 시퀀스 목록 조회
     public SequencePageResponse getSequenceList(Long id, Pageable pageable) {
@@ -77,6 +84,14 @@ public class SequenceService {
         }
 
         Sequence sequence = sequenceRepository.save(Sequence.create(userId, request.getTitle()));
+
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        LocalDateTime dayStart = today.atStartOfDay();
+        LocalDateTime dayEnd = today.plusDays(1).atStartOfDay().minusNanos(1);
+        long todayCount = scoreLogRepository.countTodayScoreByType(userId, ScoreType.SEQUENCE, dayStart, dayEnd);
+        if (todayCount < 3) {
+            scoreLogRepository.save(ScoreLog.of(userId, ScoreType.SEQUENCE, 15));
+        }
 
         for (int i = 0; i < request.getItems().size(); i++) {
             SaveSequenceRequest.ItemRequest item = request.getItems().get(i);

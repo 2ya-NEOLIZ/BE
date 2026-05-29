@@ -28,6 +28,10 @@ import java.util.Optional;
 import com._ya.neoliz.domain.Emoji;
 import com._ya.neoliz.global.exception.EmojiNotFoundException;
 import com._ya.neoliz.persistence.repository.EmojiRepository;
+import com._ya.neoliz.domain.ScoreLog;
+import com._ya.neoliz.domain.ScoreType;
+import com._ya.neoliz.persistence.repository.ScoreLogRepository;
+
 
 /**
  * 이모지 퀴즈 도메인 Service
@@ -52,6 +56,7 @@ public class QuizService {
 
     /** 힌트 사용 시 차감되는 점수 */
     private static final int HINT_PENALTY = 5;
+    private final ScoreLogRepository scoreLogRepository;
 
     // ─── 의존성 (final + @RequiredArgsConstructor로 생성자 자동 주입) ───
     private final DailyQuizScheduleRepository scheduleRepository;
@@ -150,6 +155,7 @@ public class QuizService {
             int score = calculateScore(attempt.getAttemptCount(), Boolean.TRUE.equals(attempt.getHintUsed()));
             attempt.markSolved(score);
             quizAttemptRepository.save(attempt);
+            scoreLogRepository.save(ScoreLog.of(userId, ScoreType.QUIZ, score));
             return SubmitQuizResponse.correct(attempt.getAttemptCount(), score);
         }
 
