@@ -3,12 +3,14 @@ package com._ya.neoliz.presentation.controller;
 import com._ya.neoliz.application.service.CatchService;
 import com._ya.neoliz.global.response.ApiResponse;
 import com._ya.neoliz.presentation.dto.response.CatchStatusResponse;
+import com._ya.neoliz.presentation.dto.response.StartCatchGameResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -46,5 +48,27 @@ public class CatchController {
             @AuthenticationPrincipal Long userId) {
         CatchStatusResponse response = catchService.getStatus(userId);
         return ResponseEntity.ok(ApiResponse.success("플레이 횟수 조회 성공", response));
+    }
+
+    /**
+     * POST /api/v1/neoliz/catch/start
+     *
+     * 이모지 캐치 게임을 시작한다.
+     * 잔여 플레이 횟수를 차감하고 게임 세션(gameId)과 10라운드 데이터를 발급.
+     */
+    @Operation(
+            summary = "게임 시작",
+            description = "이모지 캐치 게임을 시작합니다. 잔여 플레이 횟수를 차감하고 " +
+                    "게임 세션(gameId)과 10라운드 데이터를 한 번에 반환합니다.<br>" +
+                    "  - 게임 시작 시점에 횟수 차감 (중간 이탈해도 사용 처리)<br>" +
+                    "  - 라운드가 진행될수록 판정 영역이 좁아지고 바 속도가 빨라짐<br>" +
+                    "예외 응답:<br>" +
+                    "  - 오늘 플레이 횟수 초과: 403 Forbidden (\"오늘 플레이 횟수를 모두 사용했습니다.\")"
+    )
+    @PostMapping("/start")
+    public ResponseEntity<ApiResponse<StartCatchGameResponse>> startGame(
+            @AuthenticationPrincipal Long userId) {
+        StartCatchGameResponse response = catchService.startGame(userId);
+        return ResponseEntity.ok(ApiResponse.success("게임 시작 성공", response));
     }
 }
