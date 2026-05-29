@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 
 /**
@@ -35,7 +36,7 @@ public class CatchService {
      *
      * 처리 흐름:
      *   1) 오늘 날짜를 KST 기준으로 구함
-     *   2) [오늘 00:00, 내일 00:00) 범위에서 사용자의 게임 결과 카운트
+     *   2) 오늘 00:00:00 ~ 23:59:59.999999999 범위에서 사용자의 게임 결과 카운트
      *   3) remainingPlays = MAX_PLAYS - 사용 횟수 (최소 0)
      *   4) isPlayable = (remainingPlays > 0)
      *
@@ -44,8 +45,8 @@ public class CatchService {
      */
     public CatchStatusResponse getStatus(Long userId) {
         LocalDate today = LocalDate.now(KST);
-        LocalDateTime startOfDay = today.atStartOfDay();             // 오늘 00:00 (포함)
-        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay();   // 내일 00:00 (제외)
+        LocalDateTime startOfDay = today.atStartOfDay();          // 오늘 00:00:00.000000000
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX);     // 오늘 23:59:59.999999999
 
         int playedCount = catchGameResultRepository
                 .countByUserIdAndPlayedAtBetween(userId, startOfDay, endOfDay);
