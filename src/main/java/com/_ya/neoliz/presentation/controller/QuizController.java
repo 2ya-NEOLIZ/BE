@@ -5,6 +5,7 @@ import com._ya.neoliz.global.response.ApiResponse;
 import com._ya.neoliz.presentation.dto.request.SubmitQuizRequest;
 import com._ya.neoliz.presentation.dto.response.DailyQuizResponse;
 import com._ya.neoliz.presentation.dto.response.SubmitQuizResponse;
+import com._ya.neoliz.presentation.dto.response.UseHintResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -79,6 +80,28 @@ public class QuizController {
         // case별 메시지 분기 (API 명세서 기준)
         String message = resolveMessage(response);
         return ResponseEntity.ok(ApiResponse.success(message, response));
+    }
+
+    /**
+     * POST /api/v1/neoliz/quiz/daily/hint
+     *
+     * 오늘의 데일리 퀴즈 힌트(카테고리) 조회.
+     * 1회 이상 오답 시도한 후 사용 가능하며, 퀴즈당 1회만 사용할 수 있다.
+     */
+    @Operation(
+            summary = "데일리 퀴즈 힌트 조회",
+            description = "오늘의 데일리 퀴즈 카테고리 힌트를 조회합니다. " +
+                    "힌트는 1회 이상 오답 시도한 후 사용 가능하며, 퀴즈당 1회만 사용 가능합니다.<br>" +
+                    "예외 응답:<br>" +
+                    "  - 1회도 시도하지 않은 경우: 403 Forbidden (\"1회 오답 후 사용 가능합니다.\")<br>" +
+                    "  - 이미 종료된 퀴즈 (정답/포기/5회): 409 Conflict<br>" +
+                    "  - 이미 힌트를 사용한 경우: 409 Conflict"
+    )
+    @PostMapping("/daily/hint")
+    public ResponseEntity<ApiResponse<UseHintResponse>> useHint(
+            @AuthenticationPrincipal Long userId) {
+        UseHintResponse response = quizService.useHint(userId);
+        return ResponseEntity.ok(ApiResponse.success("힌트 조회 성공", response));
     }
 
     /**
