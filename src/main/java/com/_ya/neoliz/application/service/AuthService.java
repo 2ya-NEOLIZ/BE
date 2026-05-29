@@ -17,6 +17,12 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com._ya.neoliz.domain.ScoreLog;
+import com._ya.neoliz.persistence.repository.ScoreLogRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import com._ya.neoliz.domain.ScoreType;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +33,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
+    private final ScoreLogRepository scoreLogRepository;
 
     // 1. 회원 가입
     public void signup(SignupRequest request) {
@@ -70,6 +77,14 @@ public class AuthService {
 
         String accessToken = jwtUtil.generateAccessToken(user.getId());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId());
+
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        LocalDateTime dayStart = today.atStartOfDay();
+        LocalDateTime dayEnd = today.plusDays(1).atStartOfDay().minusNanos(1);
+        long todayLogin = scoreLogRepository.countTodayScoreByType(user.getId(), ScoreType.DAILY_LOGIN, dayStart, dayEnd);
+        if (todayLogin == 0) {
+            scoreLogRepository.save(ScoreLog.of(user.getId(), ScoreType.DAILY_LOGIN, 10));
+        }
 
         refreshTokenRepository.findByUser(user)
                 .ifPresentOrElse(
