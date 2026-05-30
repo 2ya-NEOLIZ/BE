@@ -133,4 +133,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("F409", e.getMessage(), null));
     }
 
+    // 16. 오늘 이모지 캐치 플레이 횟수 초과 시 403
+    @ExceptionHandler(CatchPlayLimitExceededException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCatchPlayLimitExceededException(CatchPlayLimitExceededException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("F403", e.getMessage(), null));
+    }
+
 }
