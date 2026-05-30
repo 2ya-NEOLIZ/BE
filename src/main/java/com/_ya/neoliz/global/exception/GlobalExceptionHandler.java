@@ -141,4 +141,28 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("F403", e.getMessage(), null));
     }
 
+    // 17. 게임 세션이 없거나 만료된 경우 400
+    @ExceptionHandler(CatchGameSessionInvalidException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCatchGameSessionInvalidException(CatchGameSessionInvalidException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("F400", e.getMessage(), null));
+    }
+
+    // 18. 이미 결과가 제출된 게임 세션에 다시 제출 시 409
+    @ExceptionHandler(CatchResultAlreadySubmittedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCatchResultAlreadySubmittedException(CatchResultAlreadySubmittedException e) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("F409", e.getMessage(), null));
+    }
+
+    // 19. 게임 결과 점수 검증 실패 시 400
+    @ExceptionHandler(CatchScoreValidationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCatchScoreValidationException(CatchScoreValidationException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("F400", e.getMessage(), null));
+    }
+
 }
