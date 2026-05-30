@@ -8,12 +8,12 @@ import com._ya.neoliz.domain.Emoji;
 import com._ya.neoliz.domain.Judgment;
 import com._ya.neoliz.domain.ScoreLog;
 import com._ya.neoliz.domain.ScoreType;
+import com._ya.neoliz.domain.User;
 import com._ya.neoliz.global.exception.CatchGameSessionInvalidException;
 import com._ya.neoliz.global.exception.CatchPlayLimitExceededException;
 import com._ya.neoliz.global.exception.CatchResultAlreadySubmittedException;
 import com._ya.neoliz.global.exception.CatchScoreValidationException;
 import com._ya.neoliz.global.exception.ForbiddenException;
-import com._ya.neoliz.domain.User;
 import com._ya.neoliz.persistence.repository.CatchGameResultRepository;
 import com._ya.neoliz.persistence.repository.CatchGameSessionRepository;
 import com._ya.neoliz.persistence.repository.EmojiRepository;
@@ -71,11 +71,17 @@ public class CatchService {
     private static final int MAX_TOTAL_SCORE = ROUND_COUNT * MAX_ROUND_SCORE;
 
     // ─── 라운드 난이도 공식 상수 (center 0.5 기준 반폭이 라운드마다 좁아짐) ───
+    /** PERFECT 존 1라운드 반폭 (0.43~0.57 → 반폭 0.07) */
     private static final double PERFECT_BASE_HALF = 0.07;
+    /** PERFECT 존 라운드당 반폭 감소량 */
     private static final double PERFECT_HALF_STEP = 0.004;
+    /** GOOD 존 1라운드 반폭 (0.33~0.67 → 반폭 0.17) */
     private static final double GOOD_BASE_HALF = 0.17;
+    /** GOOD 존 라운드당 반폭 감소량 */
     private static final double GOOD_HALF_STEP = 0.006;
+    /** 바 기본 속도 (1라운드) */
     private static final double BAR_BASE_SPEED = 1.0;
+    /** 바 라운드당 속도 증가량 */
     private static final double BAR_SPEED_STEP = 0.1;
 
     /** 캐치 주간 랭킹 노출 인원 (TOP5) */
@@ -101,10 +107,18 @@ public class CatchService {
     /**
      * 게임 시작 — 잔여 횟수 차감 + 세션 발급 + 10라운드 데이터 반환
      *
+     * 처리 흐름:
+     *   1) 오늘 사용 횟수 검증 (잔여 0 → CatchPlayLimitExceededException 403)
+     *   2) 이모지 풀에서 랜덤 10개 선정 (중복 없음)
+     *   3) 라운드별 난이도 계산하여 라운드 데이터 생성
+     *   4) gameId(UUID) 발급 + 세션(PLAYING) 저장
+     *   5) 잔여 횟수 차감 (catch_game_results 에 게임 시작 기록 INSERT, gameId 연결)
+     *   6) gameId + totalRounds + rounds 반환
+     *
      * @param userId JWT에서 추출한 사용자 PK
      * @return 게임 시작 응답 (gameId, totalRounds, rounds)
      */
-    @Transactional
+    @Transactional   // 쓰기 작업이라 readOnly 덮어쓰기
     public StartCatchGameResponse startGame(Long userId) {
         // (1) 잔여 횟수 검증
         if (countTodayPlays(userId) >= MAX_PLAYS) {
@@ -137,9 +151,9 @@ public class CatchService {
      * 처리 흐름:
      *   1) gameId로 세션 조회 (없음/만료 → 400, 타인 → 403, 이미 제출 → 409)
      *   2) abandoned=true → 0점 처리 + 랭킹 미반영 + 세션 ABANDONED
-     *   3) abandoned=false → 점수 검증 → 결과 저장 + ScoreLog 적립(랭킹 반영) + 세션 FINISHED
+     *   3) abandoned=false → 점수 검증 → 결과 저장 + ScoreLog 적립(글로벌 랭킹 반영) + 세션 FINISHED
      *   4) 신기록 판단(isPersonalBest, previousBestScore, isInRanking)
-     *   5) 주간 랭킹(공통 RankingService) 조회 후 응답 조립
+     *   5) 캐치 전용 주간 랭킹(사용자별 최고점) 조회 후 응답 조립
      *
      * @param userId  JWT에서 추출한 사용자 PK
      * @param request 게임 결과 제출 요청
