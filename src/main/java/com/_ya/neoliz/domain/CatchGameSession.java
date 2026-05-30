@@ -61,4 +61,14 @@ public class CatchGameSession extends BaseTimeEntity {
                 .expiresAt(expiresAt)
                 .build();
     }
+
+    /** 세션 상태 변경 (결과 제출 시 FINISHED / ABANDONED 처리) */
+    public void changeStatus(CatchGameStatus status) {
+        this.status = status;
+    }
+
+    /** 현재 진행 중(PLAYING) 상태인지 */
+    public boolean isPlaying() {
+        return this.status == CatchGameStatus.PLAYING;
+    }
 }
