@@ -13,21 +13,25 @@ import com._ya.neoliz.global.exception.CatchPlayLimitExceededException;
 import com._ya.neoliz.global.exception.CatchResultAlreadySubmittedException;
 import com._ya.neoliz.global.exception.CatchScoreValidationException;
 import com._ya.neoliz.global.exception.ForbiddenException;
+import com._ya.neoliz.domain.User;
 import com._ya.neoliz.persistence.repository.CatchGameResultRepository;
 import com._ya.neoliz.persistence.repository.CatchGameSessionRepository;
 import com._ya.neoliz.persistence.repository.EmojiRepository;
 import com._ya.neoliz.persistence.repository.ScoreLogRepository;
+import com._ya.neoliz.persistence.repository.UserRepository;
 import com._ya.neoliz.presentation.dto.request.SubmitCatchResultRequest;
 import com._ya.neoliz.presentation.dto.request.SubmitCatchResultRequest.RoundResult;
+import com._ya.neoliz.presentation.dto.response.CatchRankingResponse;
+import com._ya.neoliz.presentation.dto.response.CatchRankingResponse.RankEntry;
 import com._ya.neoliz.presentation.dto.response.CatchStatusResponse;
 import com._ya.neoliz.presentation.dto.response.StartCatchGameResponse;
 import com._ya.neoliz.presentation.dto.response.SubmitCatchResultResponse;
 import com._ya.neoliz.presentation.dto.response.SubmitCatchResultResponse.MyResult;
-import com._ya.neoliz.presentation.dto.response.WeeklyRankingResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -74,11 +78,14 @@ public class CatchService {
     private static final double BAR_BASE_SPEED = 1.0;
     private static final double BAR_SPEED_STEP = 0.1;
 
+    /** 캐치 주간 랭킹 노출 인원 (TOP5) */
+    private static final int RANKING_TOP_N = 5;
+
     private final CatchGameResultRepository catchGameResultRepository;
     private final CatchGameSessionRepository catchGameSessionRepository;
     private final EmojiRepository emojiRepository;
     private final ScoreLogRepository scoreLogRepository;
-    private final RankingService rankingService;
+    private final UserRepository userRepository;
 
     /**
      * 오늘 플레이 가능 횟수 조회
@@ -177,12 +184,12 @@ public class CatchService {
                 request.getPerfectCount(), request.getGoodCount(), request.getMissCount());
         session.changeStatus(CatchGameStatus.FINISHED);
 
-        // ScoreLog 적립 → 주간 랭킹에 반영
+        // ScoreLog 적립 → 글로벌 주간 랭킹(/ranking)에 캐치 점수 기여
         scoreLogRepository.save(ScoreLog.of(userId, ScoreType.CATCH, request.getTotalScore()));
 
-        // (5) 주간 랭킹 조회 (공통 RankingService 재사용)
-        WeeklyRankingResponse ranking = rankingService.getWeeklyRanking(userId);
-        boolean isInRanking = isInTop5(ranking, userId);
+        // (5) 캐치 전용 주간 랭킹 조회 (사용자별 최고점 기준)
+        CatchRankingResponse ranking = buildCatchRanking(userId);
+        boolean isInRanking = isInTop5(ranking);
 
         MyResult myResult = MyResult.builder()
                 .totalScore(request.getTotalScore())
@@ -262,8 +269,62 @@ public class CatchService {
         }
     }
 
-    /** 주간 랭킹 TOP5 안에 본인이 포함되어 있는지 */
-    private boolean isInTop5(WeeklyRankingResponse ranking, Long userId) {
+    /**
+     * 이번 주(월~일, KST) 캐치 게임 사용자별 최고점 기준 주간 랭킹 조립.
+     * - TOP5 구성 + 본인 순위 계산
+     * - 본인이 TOP5 안: 해당 항목 isMe=true, me=null
+     * - 본인이 TOP5 밖: me 에 본인 정보(rank/nickname/profileImageUrl/score)
+     */
+    private CatchRankingResponse buildCatchRanking(Long userId) {
+        LocalDate today = LocalDate.now(KST);
+        LocalDateTime weekStart = today.with(DayOfWeek.MONDAY).atStartOfDay();
+        LocalDateTime weekEnd = today.with(DayOfWeek.SUNDAY).atTime(LocalTime.MAX);
+
+        List<Object[]> rows = catchGameResultRepository.findWeeklyBestScores(weekStart, weekEnd);
+
+        List<RankEntry> top5 = new ArrayList<>();
+        RankEntry me = null;
+        boolean meInTop5 = false;
+
+        for (int i = 0; i < rows.size(); i++) {
+            Long rankUserId = ((Number) rows.get(i)[0]).longValue();
+            int bestScore = ((Number) rows.get(i)[1]).intValue();
+            int rank = i + 1;
+            boolean isMeFlag = rankUserId.equals(userId);
+
+            if (rank <= RANKING_TOP_N) {
+                User user = userRepository.findById(rankUserId).orElse(null);
+                if (user == null) continue;
+                top5.add(RankEntry.builder()
+                        .rank(rank)
+                        .nickname(user.getNickname())
+                        .profileImageUrl(user.getProfileImageUrl())
+                        .score(bestScore)
+                        .isMe(isMeFlag)
+                        .build());
+                if (isMeFlag) meInTop5 = true;
+            } else if (isMeFlag) {
+                User user = userRepository.findById(userId).orElse(null);
+                if (user != null) {
+                    me = RankEntry.builder()
+                            .rank(rank)
+                            .nickname(user.getNickname())
+                            .profileImageUrl(user.getProfileImageUrl())
+                            .score(bestScore)
+                            .isMe(null)
+                            .build();
+                }
+            }
+        }
+
+        return CatchRankingResponse.builder()
+                .top5(top5)
+                .me(meInTop5 ? null : me)
+                .build();
+    }
+
+    /** 캐치 주간 랭킹 TOP5 안에 본인이 포함되어 있는지 */
+    private boolean isInTop5(CatchRankingResponse ranking) {
         if (ranking.getTop5() == null) return false;
         return ranking.getTop5().stream()
                 .anyMatch(entry -> Boolean.TRUE.equals(entry.getIsMe()));
