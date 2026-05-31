@@ -67,8 +67,14 @@ public class CatchService {
     /** 라운드 최대 점수 (PERFECT) — 점수 검증 상한 */
     private static final int MAX_ROUND_SCORE = Judgment.PERFECT.getScore();
 
-    /** 게임 이론상 최대 점수 (10라운드 × PERFECT) */
-    private static final int MAX_TOTAL_SCORE = ROUND_COUNT * MAX_ROUND_SCORE;
+    /** 콤보 보너스 단가 (최대 콤보 1당 가산 점수) */
+    private static final int COMBO_BONUS_UNIT = 5;
+
+    /** 라운드 점수 이론상 최대 (10라운드 × PERFECT) */
+    private static final int MAX_ROUND_TOTAL = ROUND_COUNT * MAX_ROUND_SCORE;
+
+    /** 게임 이론상 최대 점수 (라운드 최대 + 콤보 보너스 최대) */
+    private static final int MAX_TOTAL_SCORE = MAX_ROUND_TOTAL + ROUND_COUNT * COMBO_BONUS_UNIT;
 
     // ─── 라운드 난이도 공식 상수 (center 0.5 기준 반폭이 라운드마다 좁아짐) ───
     /** PERFECT 존 1라운드 반폭 (0.43~0.57 → 반폭 0.07) */
@@ -239,9 +245,10 @@ public class CatchService {
      * 제출된 결과의 점수 검증.
      * - results 개수가 라운드 수와 일치
      * - 각 라운드 판정/점수 유효성 (judgment != null, 0 ≤ score ≤ 50)
-     * - results 점수 합 = totalScore
+     * - maxCombo 0~10 범위
+     * - results 점수 합 + 콤보 보너스(maxCombo × 5) = totalScore
      * - 판정별 횟수(perfect/good/miss) = 실제 results 판정 분포
-     * - totalScore 이론상 최대(500) 이내, maxCombo 0~10 범위
+     * - totalScore 이론상 최대(550 = 라운드 500 + 콤보 50) 이내
      */
     private void validateScore(SubmitCatchResultRequest req) {
         List<RoundResult> results = req.getResults();
@@ -251,6 +258,11 @@ public class CatchService {
         if (req.getTotalScore() == null || req.getMaxCombo() == null
                 || req.getPerfectCount() == null || req.getGoodCount() == null || req.getMissCount() == null) {
             throw new CatchScoreValidationException("점수 관련 필드가 누락되었습니다.");
+        }
+
+        // maxCombo 범위 먼저 검증 (콤보 보너스 계산에 사용되므로)
+        if (req.getMaxCombo() < 0 || req.getMaxCombo() > ROUND_COUNT) {
+            throw new CatchScoreValidationException("최대 콤보 범위를 벗어났습니다.");
         }
 
         int sum = 0, perfect = 0, good = 0, miss = 0;
@@ -269,17 +281,16 @@ public class CatchService {
             }
         }
 
-        if (sum != req.getTotalScore()) {
-            throw new CatchScoreValidationException("라운드 점수 합과 총 점수가 일치하지 않습니다.");
+        // 라운드 점수 합 + 콤보 보너스(maxCombo × 5) 가 totalScore 와 일치해야 함
+        int comboBonus = req.getMaxCombo() * COMBO_BONUS_UNIT;
+        if (sum + comboBonus != req.getTotalScore()) {
+            throw new CatchScoreValidationException("라운드 점수 합과 콤보 보너스의 합이 총 점수와 일치하지 않습니다.");
         }
         if (req.getTotalScore() < 0 || req.getTotalScore() > MAX_TOTAL_SCORE) {
             throw new CatchScoreValidationException("총 점수가 허용 범위를 벗어났습니다.");
         }
         if (perfect != req.getPerfectCount() || good != req.getGoodCount() || miss != req.getMissCount()) {
             throw new CatchScoreValidationException("판정 횟수가 라운드 결과와 일치하지 않습니다.");
-        }
-        if (req.getMaxCombo() < 0 || req.getMaxCombo() > ROUND_COUNT) {
-            throw new CatchScoreValidationException("최대 콤보 범위를 벗어났습니다.");
         }
     }
 
