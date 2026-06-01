@@ -15,12 +15,13 @@ import lombok.Getter;
 @Builder
 public class UseHintResponse {
 
-    /** 정답의 카테고리 힌트 (동물 / 영화 / 노래 / 밈) */
     private String category;
+    private String hint;
 
-    public static UseHintResponse of(String category) {
+    public static UseHintResponse of(String category, String hint) {
         return UseHintResponse.builder()
                 .category(category)
+                .hint(hint)
                 .build();
     }
 }
