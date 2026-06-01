@@ -216,8 +216,8 @@ public class QuizService {
         attempt.useHint();
         quizAttemptRepository.save(attempt);
 
-        // (6) 카테고리 반환
-        return UseHintResponse.of(quiz.getCategory());
+        // (6) 카테고리 + 힌트 반환
+        return UseHintResponse.of(quiz.getCategory(), quiz.getHint());
     }
 
     // ───────────────────────────────────────────────
