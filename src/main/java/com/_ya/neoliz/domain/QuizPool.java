@@ -30,4 +30,7 @@ public class QuizPool extends BaseTimeEntity {               // 시각 필드는
 
     @Column(nullable = false, length = 20)                   // NOT NULL, VARCHAR(20) - 카테고리 (animal/hufs/game/meme)
     private String category;
+
+    @Column(length = 200)
+    private String hint;
 }
