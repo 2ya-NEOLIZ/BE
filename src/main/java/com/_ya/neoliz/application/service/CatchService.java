@@ -14,6 +14,7 @@ import com._ya.neoliz.global.exception.CatchPlayLimitExceededException;
 import com._ya.neoliz.global.exception.CatchResultAlreadySubmittedException;
 import com._ya.neoliz.global.exception.CatchScoreValidationException;
 import com._ya.neoliz.global.exception.ForbiddenException;
+import com._ya.neoliz.global.exception.UserNotFoundException;
 import com._ya.neoliz.persistence.repository.CatchGameResultRepository;
 import com._ya.neoliz.persistence.repository.CatchGameSessionRepository;
 import com._ya.neoliz.persistence.repository.EmojiRepository;
@@ -114,6 +115,7 @@ public class CatchService {
      * 게임 시작 — 잔여 횟수 차감 + 세션 발급 + 10라운드 데이터 반환
      *
      * 처리 흐름:
+     *   0) 사용자 row에 비관적 락 → 동일 유저의 동시 요청 직렬화 (체크-후-삽입 원자성 보장)
      *   1) 오늘 사용 횟수 검증 (잔여 0 → CatchPlayLimitExceededException 403)
      *   2) 이모지 풀에서 랜덤 10개 선정 (중복 없음)
      *   3) 라운드별 난이도 계산하여 라운드 데이터 생성
@@ -126,6 +128,10 @@ public class CatchService {
      */
     @Transactional   // 쓰기 작업이라 readOnly 덮어쓰기
     public StartCatchGameResponse startGame(Long userId) {
+        // (0) 동시 요청 직렬화 — 같은 유저의 중복 시작 요청이 카운트 체크를 동시에 통과하지 못하도록 락
+        userRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> new UserNotFoundException("존재하지 않는 사용자입니다."));
+
         // (1) 잔여 횟수 검증
         if (countTodayPlays(userId) >= MAX_PLAYS) {
             throw new CatchPlayLimitExceededException("오늘 플레이 횟수를 모두 사용했습니다.");
