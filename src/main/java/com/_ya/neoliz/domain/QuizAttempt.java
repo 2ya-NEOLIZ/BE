@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
  * 상태 변경은 setter 대신 비즈니스 메서드로 처리 (Service에서 호출).
  */
 @Entity
-@Table(name = "quiz_attempts")
+@Table(name = "quiz_attempts", uniqueConstraints = @UniqueConstraint(name = "uk_quiz_attempts_user_quiz", columnNames = {"user_id", "quiz_id"}))
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

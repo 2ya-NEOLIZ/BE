@@ -18,6 +18,7 @@ import com._ya.neoliz.presentation.dto.response.DailyQuizResponse.EmojiInfo;
 import com._ya.neoliz.presentation.dto.response.SubmitQuizResponse;
 import com._ya.neoliz.presentation.dto.response.UseHintResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -128,8 +129,7 @@ public class QuizService {
         QuizPool quiz = getTodayQuiz();
 
         // (2) 시도 기록 조회 또는 신규 생성
-        QuizAttempt attempt = quizAttemptRepository.findByUserIdAndQuizId(userId, quiz.getId())
-                .orElseGet(() -> QuizAttempt.createNew(userId, quiz.getId()));
+        QuizAttempt attempt = getOrCreateAttempt(userId, quiz.getId());
 
         // (3) 이미 종료된 퀴즈에 다시 시도 → 409
         if (Boolean.TRUE.equals(attempt.getIsFinished())) {
@@ -240,6 +240,23 @@ public class QuizService {
                 .orElseThrow(() -> new QuizNotFoundException(
                         "퀴즈를 찾을 수 없습니다. quizId: " + schedule.getQuizId()
                 ));
+    }
+
+    /**
+     * (user_id, quiz_id) 시도 기록을 조회하고, 없으면 새로 생성해 즉시 저장.
+     * 동시 요청이 겹쳐 둘 다 "없음"으로 판단하더라도, UNIQUE 제약 위반 시
+     * 먼저 커밋된 쪽을 재조회해서 중복 생성을 막는다.
+     */
+    private QuizAttempt getOrCreateAttempt(Long userId, Long quizId) {
+        return quizAttemptRepository.findByUserIdAndQuizId(userId, quizId)
+                .orElseGet(() -> {
+                    try {
+                        return quizAttemptRepository.save(QuizAttempt.createNew(userId, quizId));
+                    } catch (DataIntegrityViolationException e) {
+                        return quizAttemptRepository.findByUserIdAndQuizId(userId, quizId)
+                                .orElseThrow(() -> e);
+                    }
+                });
     }
 
     /**
